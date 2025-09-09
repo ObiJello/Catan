@@ -151,8 +151,10 @@ class TitleScene: SKScene {
                 configScene.scaleMode = .aspectFill
                 self.view?.presentScene(configScene, transition: SKTransition.fade(withDuration: 0.5))
             } else if nodeName == "multiplayerButton" {
-                // For now, do nothing or provide feedback that this is unimplemented
-                print("Multiplayer button tapped (no action implemented).")
+                // Navigate to Multiplayer Menu Scene
+                let multiplayerMenuScene = MultiplayerMenuScene(size: self.size)
+                multiplayerMenuScene.scaleMode = .aspectFill
+                self.view?.presentScene(multiplayerMenuScene, transition: SKTransition.fade(withDuration: 0.5))
             }
             // (Optional) you could handle settingsButton, shopButton, profileButton taps here in the future
         }
