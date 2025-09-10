@@ -30,7 +30,11 @@ app.get('/health', (req, res) => {
 });
 
 app.post('/api/lobby/create', (req, res) => {
-  const { hostId, settings } = req.body;
+  const { hostId, roomCode, settings } = req.body;
+  // Include roomCode in settings if provided
+  if (roomCode) {
+    settings.roomCode = roomCode;
+  }
   const room = roomManager.createRoom(hostId, settings);
   res.json({ success: true, roomCode: room.code });
 });

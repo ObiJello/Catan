@@ -89,6 +89,10 @@ fastlane/test_output
 
 iOSInjectionProject/
 
+# Node modules
+node_modules/
+package-lock.json
+
 # macOS
 .DS_Store
 .AppleDouble

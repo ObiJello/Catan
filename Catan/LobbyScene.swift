@@ -20,6 +20,10 @@ class LobbyScene: SKScene {
     private var players: [LobbyPlayer] = []
     private let maxPlayers = 4
     
+    // Network properties
+    private var networkManager: NetworkManager?
+    private var isConnectedToServer: Bool = false
+    
     // UI Components
     private var backButton: SKShapeNode!
     private var titleLabel: SKLabelNode!
@@ -46,6 +50,12 @@ class LobbyScene: SKScene {
         if isHost {
             generateLobbyCode()
             createHostPlayer()
+            // Connect to server and create room
+            setupServerConnection()
+        } else {
+            // If joining, we should already have the lobby code
+            // Connect and join the room
+            joinServerRoom()
         }
         
         setupUI()
@@ -584,6 +594,193 @@ class LobbyScene: SKScene {
             } else if nodeName == "chatButton" {
                 showMessage("Chat coming soon!")
             }
+        }
+    }
+    
+    // MARK: - Network Methods
+    
+    private func setupServerConnection() {
+        // Create room on server via HTTP first
+        createRoomOnServer { [weak self] success in
+            if success {
+                // Then establish WebSocket connection
+                self?.connectWebSocket()
+            } else {
+                self?.showMessage("Failed to create room on server")
+            }
+        }
+    }
+    
+    private func createRoomOnServer(completion: @escaping (Bool) -> Void) {
+        guard let url = URL(string: "http://localhost:3000/api/lobby/create") else {
+            completion(false)
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let hostId = UserDefaults.standard.string(forKey: "multiplayerPlayerId") ?? UUID().uuidString
+        UserDefaults.standard.set(hostId, forKey: "multiplayerPlayerId")
+        
+        let body: [String: Any] = [
+            "hostId": hostId,
+            "roomCode": lobbyCode,  // Use our generated code
+            "settings": [
+                "maxPlayers": maxPlayers,
+                "victoryPoints": victoryPoints,
+                "discardLimit": discardLimit,
+                "isPrivate": false
+            ]
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            print("Failed to serialize request body: \(error)")
+            completion(false)
+            return
+        }
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            if let error = error {
+                print("Room creation error: \(error)")
+                DispatchQueue.main.async {
+                    completion(false)
+                }
+                return
+            }
+            
+            if let data = data,
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                print("Room created on server: \(json)")
+                DispatchQueue.main.async {
+                    // Update lobby code if server provided one
+                    if let serverCode = json["roomCode"] as? String {
+                        self?.lobbyCode = serverCode
+                        self?.lobbyCodeLabel?.text = serverCode
+                    }
+                    completion(true)
+                }
+            } else {
+                DispatchQueue.main.async {
+                    completion(false)
+                }
+            }
+        }.resume()
+    }
+    
+    private func connectWebSocket() {
+        // Initialize NetworkManager and connect
+        networkManager = NetworkManager()
+        networkManager?.delegate = self
+        
+        // Send join-room message
+        let playerId = UserDefaults.standard.string(forKey: "multiplayerPlayerId") ?? ""
+        let playerName = UserDefaults.standard.string(forKey: "playerUsername") ?? "Player"
+        
+        let joinData: [String: Any] = [
+            "roomCode": lobbyCode,
+            "playerId": playerId,
+            "playerName": playerName,
+            "isHost": isHost
+        ]
+        
+        // Connect and join room
+        if isHost {
+            networkManager?.startHost()
+        } else {
+            networkManager?.joinGame(withCode: lobbyCode)
+        }
+        
+        // Send join-room event through raw WebSocket
+        // Note: In a real implementation, we'd need to modify NetworkManager to handle lobby events
+        print("Connected to server WebSocket for room: \(lobbyCode)")
+        isConnectedToServer = true
+        
+        // Show connection status
+        showMessage("Connected to server")
+    }
+    
+    private func joinServerRoom() {
+        // For joining players, connect WebSocket and join the room
+        connectWebSocket()
+    }
+    
+    private func sendPlayerUpdate() {
+        // Send current player list to server
+        guard isConnectedToServer else { return }
+        
+        // In a real implementation, send player updates through NetworkManager
+        // networkManager?.sendLobbyUpdate(players: players)
+    }
+    
+    private func sendReadyStatus(playerId: String, isReady: Bool) {
+        // Send ready status to server
+        guard isConnectedToServer else { return }
+        
+        // In a real implementation:
+        // networkManager?.sendReadyStatus(playerId: playerId, isReady: isReady)
+    }
+}
+
+// MARK: - NetworkManagerDelegate Extension
+extension LobbyScene: NetworkManagerDelegate {
+    func networkManager(_ manager: NetworkManager, didReceiveGameAction action: GameAction) {
+        // Handle lobby-related actions
+        DispatchQueue.main.async {
+            switch action.type {
+            case .playerJoined:
+                // Add new player to lobby
+                if let playerData = action.data["player"] as? [String: Any],
+                   let id = playerData["id"] as? String,
+                   let name = playerData["name"] as? String {
+                    // Check if player already exists
+                    if !self.players.contains(where: { $0.id == id }) {
+                        let newPlayer = LobbyPlayer(
+                            id: id,
+                            username: name,
+                            avatarIndex: 0,
+                            isHost: false,
+                            isBot: false,
+                            isReady: false,
+                            colorName: self.colorOptions[self.players.count]
+                        )
+                        self.players.append(newPlayer)
+                        self.updatePlayerDisplay()
+                    }
+                }
+                
+            case .playerLeft:
+                // Remove player from lobby
+                if let playerId = action.data["playerId"] as? String {
+                    self.players.removeAll { $0.id == playerId }
+                    self.updatePlayerDisplay()
+                }
+                
+            default:
+                break
+            }
+        }
+    }
+    
+    func networkManager(_ manager: NetworkManager, didUpdateConnectionStatus connected: Bool) {
+        DispatchQueue.main.async {
+            self.isConnectedToServer = connected
+            if connected {
+                self.showMessage("Connected to server")
+            } else {
+                self.showMessage("Disconnected from server")
+            }
+        }
+    }
+    
+    func networkManager(_ manager: NetworkManager, playerDidDisconnect playerId: String) {
+        DispatchQueue.main.async {
+            self.players.removeAll { $0.id == playerId }
+            self.updatePlayerDisplay()
+            self.showMessage("Player disconnected")
         }
     }
 }

@@ -6,7 +6,11 @@ class RoomManager {
   }
 
   createRoom(hostId, settings = {}) {
+    // Use provided room code if available, otherwise generate new one
     const room = new Room(hostId, settings);
+    if (settings.roomCode) {
+      room.code = settings.roomCode;
+    }
     this.rooms.set(room.code, room);
     console.log(`Room created: ${room.code} by host ${hostId}`);
     return room;
