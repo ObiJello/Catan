@@ -29,6 +29,11 @@ class GameState {
     // New property to track if the dice have been rolled this turn
     var hasRolledDice: Bool = false
     
+    // Computed property to check if we're in setup phase
+    var isSetupPhase: Bool {
+        return currentPhase == .setup
+    }
+    
     init(playerCount: Int) {
         let colors: [UIColor] = [.red, .blue, .white, .orange]
         for i in 0..<playerCount {

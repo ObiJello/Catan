@@ -85,9 +85,16 @@ class NetworkManager: NSObject {
     private var isHost = false
     private var roomCode: String?
     
-    // Server configuration (would be configured for real server)
-    private let serverURL = "wss://catan-server.example.com/game"
-    private let localServerURL = "ws://localhost:3000/game"
+    // Server configuration
+    #if DEBUG
+    // For simulator testing
+    private let serverURL = "ws://localhost:3000"
+    // For device testing, replace with your machine's IP address
+    // private let serverURL = "ws://192.168.1.100:3000"
+    #else
+    // Production server URL
+    private let serverURL = "wss://catan-server.example.com"
+    #endif
     
     // Message queue for offline handling
     private var messageQueue: [GameAction] = []
@@ -119,9 +126,7 @@ class NetworkManager: NSObject {
     }
     
     private func connect(asHost: Bool) {
-        // For demo purposes, use local server URL
-        // In production, use the actual server URL
-        guard let url = URL(string: localServerURL) else {
+        guard let url = URL(string: serverURL) else {
             print("Invalid server URL")
             return
         }
