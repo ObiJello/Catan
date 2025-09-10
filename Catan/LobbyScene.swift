@@ -496,13 +496,14 @@ class LobbyScene: SKScene {
             return
         }
         
-        // Navigate to multiplayer game scene
-        let gameScene = MultiplayerGameScene(size: self.size)
+        // Navigate to complete multiplayer game scene
+        let gameScene = MultiplayerGameSceneComplete(size: self.size)
         gameScene.scaleMode = .aspectFill
         gameScene.players = players
         gameScene.victoryPointGoal = victoryPoints
         gameScene.discardLimit = discardLimit
         gameScene.isHost = isHost
+        gameScene.lobbyCode = lobbyCode
         
         self.view?.presentScene(gameScene, transition: SKTransition.fade(withDuration: 0.5))
     }
