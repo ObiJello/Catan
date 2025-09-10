@@ -14,13 +14,13 @@ class GameScene: SKScene {
     
     var portIndex: Int = -1
         
-    private var selectedBuildingType: BuildingType?  // Add to class properties
-    private var vertices: [VertexPoint] = []  // Add to class properties
-    private var edges: [EdgePoint] = []  // Add to class properties
-    private var tilePoints: [TilePoint] = []
+    internal var selectedBuildingType: BuildingType?  // Add to class properties
+    internal var vertices: [VertexPoint] = []  // Add to class properties
+    internal var edges: [EdgePoint] = []  // Add to class properties
+    internal var tilePoints: [TilePoint] = []
     
-    private var diceNodes: [SKSpriteNode] = []
-    private var diceRolled: Bool = false
+    internal var diceNodes: [SKSpriteNode] = []
+    internal var diceRolled: Bool = false
     
     var roadBuildingModeActive: Bool = false
     var freeRoadsRemaining: Int = 0

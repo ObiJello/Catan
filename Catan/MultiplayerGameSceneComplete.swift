@@ -690,15 +690,6 @@ struct TradeOffer {
     let requesting: [ResourceType: Int]
 }
 
-// MARK: - Development Card Type
-enum DevelopmentCardType: String {
-    case knight = "knight"
-    case roadBuilding = "roadBuilding"
-    case yearOfPlenty = "yearOfPlenty"
-    case monopoly = "monopoly"
-    case victoryPoint = "victoryPoint"
-}
-
 // MARK: - NetworkManagerDelegate
 extension MultiplayerGameSceneComplete: NetworkManagerDelegate {
     func networkManager(_ manager: NetworkManager, didReceiveGameAction action: GameAction) {

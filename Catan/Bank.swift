@@ -3,12 +3,12 @@ import SpriteKit
 
 // MARK: - Development Card Definitions
 
-enum DevelopmentCardType {
-    case knight
-    case roadBuilding
-    case yearOfPlenty
-    case monopoly
-    case victoryPoint
+enum DevelopmentCardType: String {
+    case knight = "knight"
+    case roadBuilding = "roadBuilding"
+    case yearOfPlenty = "yearOfPlenty"
+    case monopoly = "monopoly"
+    case victoryPoint = "victoryPoint"
 }
 
 class DevelopmentCard {
