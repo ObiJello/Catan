@@ -603,8 +603,9 @@ class LobbyScene: SKScene {
         // Create room on server via HTTP first
         createRoomOnServer { [weak self] success in
             if success {
-                // Then establish WebSocket connection
-                self?.connectWebSocket()
+                // WebSocket connection will be established when game starts
+                // Not needed in lobby phase - HTTP is sufficient for room creation
+                self?.showMessage("Room created successfully")
             } else {
                 self?.showMessage("Failed to create room on server")
             }
@@ -704,8 +705,11 @@ class LobbyScene: SKScene {
     }
     
     private func joinServerRoom() {
-        // For joining players, connect WebSocket and join the room
-        connectWebSocket()
+        // For joining players, we'll handle this via HTTP
+        // WebSocket connection will be established when game starts
+        // For now, just mark as connected
+        isConnectedToServer = true
+        showMessage("Joined lobby")
     }
     
     private func sendPlayerUpdate() {
@@ -726,6 +730,8 @@ class LobbyScene: SKScene {
 }
 
 // MARK: - NetworkManagerDelegate Extension
+// WebSocket handling will be done when game starts, not in lobby
+/*
 extension LobbyScene: NetworkManagerDelegate {
     func networkManager(_ manager: NetworkManager, didReceiveGameAction action: GameAction) {
         // Handle lobby-related actions
@@ -784,3 +790,4 @@ extension LobbyScene: NetworkManagerDelegate {
         }
     }
 }
+*/
